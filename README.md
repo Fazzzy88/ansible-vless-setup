@@ -18,7 +18,7 @@
 ## Быстрый старт
 1. Клонируйте репозиторий:
     ```bash
-    git clone [https://github.com/Fazzzy/ansible-vless-setup.git](https://github.com/Fazzzy/ansible-vless-setup.git)
+    git clone [https://github.com/Fazzzy88/ansible-vless-setup.git](https://github.com/Fazzzy88/ansible-vless-setup.git)
     cd ansible-vless-setup
     ```
 

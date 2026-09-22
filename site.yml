@@ -1,0 +1,117 @@
+---
+- name: Prepare VPS for VLESS
+  hosts: vps_servers
+  become: true
+
+  vars_files:
+    - vars.yml
+
+  tasks:
+    # -------------------------------------------------------------------------
+    # Base system
+    # -------------------------------------------------------------------------
+
+    - name: Update apt cache
+      ansible.builtin.apt:
+        update_cache: true
+        cache_valid_time: 3600
+
+    - name: Install basic system packages
+      ansible.builtin.apt:
+        name:
+          - ca-certificates
+          - curl
+          - git
+          - gnupg
+          - ufw
+        state: present
+
+    # -------------------------------------------------------------------------
+    # Docker
+    # -------------------------------------------------------------------------
+
+    - name: Create directory for apt keyrings
+      ansible.builtin.file:
+        path: /etc/apt/keyrings
+        state: directory
+        mode: "0755"
+
+    - name: Download Docker repository key
+      ansible.builtin.get_url:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        dest: /etc/apt/keyrings/docker.asc
+        mode: "0644"
+        force: false
+
+    - name: Add Docker apt repository
+      ansible.builtin.apt_repository:
+        repo: >-
+          deb [arch={{ ansible_architecture }}
+          signed-by=/etc/apt/keyrings/docker.asc]
+          https://download.docker.com/linux/ubuntu
+          {{ ansible_distribution_release }} stable
+        filename: docker
+        state: present
+
+    - name: Install Docker
+      ansible.builtin.apt:
+        name:
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+          - docker-buildx-plugin
+          - docker-compose-plugin
+        state: present
+        update_cache: true
+
+    - name: Make sure Docker is running
+      ansible.builtin.systemd:
+        name: docker
+        state: started
+        enabled: true
+
+    # -------------------------------------------------------------------------
+    # Application directory
+    # -------------------------------------------------------------------------
+
+    - name: Create application directory
+      ansible.builtin.file:
+        path: "{{ working_dir }}"
+        state: directory
+        owner: root
+        group: root
+        mode: "0755"
+
+    # -------------------------------------------------------------------------
+    # Firewall
+    # -------------------------------------------------------------------------
+
+    - name: Allow SSH access
+      ansible.builtin.ufw:
+        rule: allow
+        port: "{{ ansible_port | default(22) | string }}"
+        proto: tcp
+
+    - name: Allow VLESS port
+      ansible.builtin.ufw:
+        rule: allow
+        port: "{{ vless_port | string }}"
+        proto: tcp
+
+    - name: Enable UFW
+      ansible.builtin.ufw:
+        state: enabled
+        policy: deny
+        direction: incoming
+
+    # -------------------------------------------------------------------------
+    # Finish
+    # -------------------------------------------------------------------------
+
+    - name: Show deployment summary
+      ansible.builtin.debug:
+        msg:
+          - "VPS preparation completed."
+          - "Docker is installed and running."
+          - "Application directory: {{ working_dir }}"
+          - "VLESS port: {{ vless_port }}"

@@ -1,0 +1,15 @@
+---
+# Системные настройки
+working_dir: "/opt/vless-server"
+domain_name: "example.com"
+
+# Настройки сети и портов
+vless_port: 443
+reality_dest: "yahoo.com:443"
+server_names:
+  - "yahoo.com"
+  - "www.yahoo.com"
+
+# Настройки пользователя
+user_uuid: "00000000-0000-0000-0000-000000000000"  # Сгенерируйте через uuidgen
+short_id: "0123456789abcdef"                        # 8 или 16 символов hex
